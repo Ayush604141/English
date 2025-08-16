@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import {
   AppBar,
@@ -64,6 +65,12 @@ export default function VocabList({ data }: VocabListProps) {
     >
       <AppBar color="default" position="fixed" sx={{ p: 2 }}>
         <Stack direction="row" gap={2}>
+          <Image
+            src="/icons/icon-192x192.png"
+            alt="icon"
+            width={80}
+            height={10}
+          />
           <Select
             value={type}
             onChange={(e) => setType(e.target.value as VocabType)}
