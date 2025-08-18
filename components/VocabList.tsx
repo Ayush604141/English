@@ -3,20 +3,26 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import {
-  AppBar,
   Card,
   CardContent,
   Typography,
   Chip,
   Box,
   Stack,
-  Select,
-  MenuItem,
+  IconButton,
+  InputBase,
+  Paper,
 } from "@mui/material";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 import { LetterOptions, VocabItem, VocabType } from "../utils/common";
 
 interface VocabListProps {
   data: VocabItem[];
+  mode: "light" | "dark";
+  setMode: (mode: "light" | "dark") => void;
 }
 
 const typeColors: Record<VocabType, string> = {
@@ -33,9 +39,10 @@ const typeGradients: Record<VocabType, string> = {
   "one word": "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
 };
 
-export default function VocabList({ data }: VocabListProps) {
+export default function VocabList({ data, mode, setMode }: VocabListProps) {
   const [type, setType] = useState<VocabType>("word");
   const [letter, setLetter] = useState<string>("a-letter");
+  const [searchQuery, setSearchQuery] = useState("");
   const [filteredData, setFilteredData] = useState<VocabItem[]>(data);
 
   useEffect(() => {
@@ -46,13 +53,38 @@ export default function VocabList({ data }: VocabListProps) {
       return undefined;
     };
 
+    const getSearchableText = (item: VocabItem): string => {
+      const texts = [
+        item.word,
+        item.idiom,
+        item.meaning,
+        item["meaning (hindi)"],
+        item.synonyms,
+      ].filter(Boolean);
+      return texts.join(" ").toLowerCase();
+    };
+
     const newFilteredData = data.filter((item) => {
+      // Type filter
       if (item.type !== type) return false;
+
+      // Letter filter
       const mainText = getMainText(item);
-      return mainText && mainText[0]?.toLowerCase() === letter[0].toLowerCase();
+      if (!mainText || mainText[0]?.toLowerCase() !== letter[0].toLowerCase())
+        return false;
+
+      // Search filter
+      if (searchQuery) {
+        const searchableText = getSearchableText(item);
+        const searchTerms = searchQuery.toLowerCase().split(" ");
+        return searchTerms.every((term) => searchableText.includes(term));
+      }
+
+      return true;
     });
+
     setFilteredData(newFilteredData);
-  }, [type, letter, data]);
+  }, [type, letter, searchQuery, data]);
 
   return (
     <Box
@@ -63,42 +95,212 @@ export default function VocabList({ data }: VocabListProps) {
         p: 2,
       }}
     >
-      <AppBar color="default" position="fixed" sx={{ p: 2 }}>
-        <Stack direction="row" gap={2}>
-          <Image
-            src="/icons/icon-192x192.png"
-            alt="icon"
-            width={80}
-            height={10}
-          />
-          <Select
-            value={type}
-            onChange={(e) => setType(e.target.value as VocabType)}
-            fullWidth
+      <Box sx={{ mb: 4, mt: 2 }}>
+        <Stack spacing={2}>
+          {/* Header with search and theme toggle */}
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <Paper
+              sx={{
+                p: "2px 4px",
+                display: "flex",
+                alignItems: "center",
+                flex: 1,
+                borderRadius: 2,
+                bgcolor:
+                  mode === "dark"
+                    ? "rgba(255, 255, 255, 0.04)"
+                    : "rgba(0, 0, 0, 0.03)",
+                border: `1px solid ${
+                  mode === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"
+                }`,
+                boxShadow:
+                  mode === "dark" ? "0 4px 12px rgba(0,0,0,0.3)" : "none",
+                transition: "all 0.2s ease-in-out",
+                "&:hover": {
+                  bgcolor:
+                    mode === "dark"
+                      ? "rgba(255, 255, 255, 0.06)"
+                      : "rgba(0, 0, 0, 0.05)",
+                },
+              }}
+            >
+              <IconButton sx={{ p: "10px" }} aria-label="search">
+                <SearchIcon />
+              </IconButton>
+              <InputBase
+                sx={{ ml: 1, flex: 1 }}
+                placeholder="Search in words, meanings, or synonyms..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <IconButton
+                  sx={{ p: "10px" }}
+                  aria-label="clear search"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <ClearIcon />
+                </IconButton>
+              )}
+            </Paper>
+            <IconButton
+              onClick={() => setMode(mode === "light" ? "dark" : "light")}
+              sx={{
+                position: "relative",
+                color:
+                  mode === "dark"
+                    ? "rgba(255, 255, 255, 0.7)"
+                    : "rgba(0, 0, 0, 0.7)",
+                bgcolor:
+                  mode === "dark"
+                    ? "rgba(255, 255, 255, 0.04)"
+                    : "rgba(0, 0, 0, 0.03)",
+                border: `1px solid ${
+                  mode === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"
+                }`,
+                transition: "all 0.3s ease",
+                transform: "rotate(0deg)",
+                "&:hover": {
+                  bgcolor:
+                    mode === "dark"
+                      ? "rgba(255, 255, 255, 0.06)"
+                      : "rgba(0, 0, 0, 0.05)",
+                  transform: "rotate(90deg)",
+                },
+                "& .MuiSvgIcon-root": {
+                  transition: "transform 0.3s ease, opacity 0.2s ease",
+                  position: "absolute",
+                  opacity: 1,
+                },
+                "& .icon-enter": {
+                  transform: "rotate(0deg)",
+                  opacity: 1,
+                },
+                "& .icon-exit": {
+                  transform: "rotate(-90deg)",
+                  opacity: 0,
+                },
+              }}
+            >
+              <Box sx={{ position: "relative", width: 24, height: 24 }}>
+                <Box sx={{ position: "absolute" }}>
+                  <Brightness7Icon
+                    className={mode === "dark" ? "icon-enter" : "icon-exit"}
+                    sx={{
+                      opacity: mode === "dark" ? 1 : 0,
+                      transform:
+                        mode === "dark" ? "rotate(0deg)" : "rotate(-90deg)",
+                      transition: "all 0.3s ease",
+                    }}
+                  />
+                </Box>
+                <Box sx={{ position: "absolute" }}>
+                  <Brightness4Icon
+                    className={mode === "light" ? "icon-enter" : "icon-exit"}
+                    sx={{
+                      opacity: mode === "light" ? 1 : 0,
+                      transform:
+                        mode === "light" ? "rotate(0deg)" : "rotate(-90deg)",
+                      transition: "all 0.3s ease",
+                    }}
+                  />
+                </Box>
+              </Box>
+            </IconButton>
+          </Box>
+
+          {/* Type filter using touch-friendly chips */}
+          <Box
+            sx={{
+              display: "flex",
+              overflowX: "auto",
+              pb: 1,
+              mx: -2,
+              px: 2,
+              "&::-webkit-scrollbar": { display: "none" },
+              scrollSnapType: "x mandatory",
+            }}
           >
             {(Object.keys(typeColors) as VocabType[]).map((vocabType) => (
-              <MenuItem key={vocabType} value={vocabType}>
-                {vocabType.slice(0, 1).toUpperCase() + vocabType.slice(1)}
-              </MenuItem>
+              <Box
+                key={vocabType}
+                sx={{
+                  scrollSnapAlign: "start",
+                  mr: 1,
+                  "&:last-child": { mr: 0 },
+                }}
+              >
+                <Chip
+                  label={
+                    vocabType.slice(0, 1).toUpperCase() + vocabType.slice(1)
+                  }
+                  onClick={() => setType(vocabType)}
+                  color={type === vocabType ? "primary" : "default"}
+                  variant={type === vocabType ? "filled" : "outlined"}
+                  sx={{
+                    borderRadius: "16px",
+                    height: "40px",
+                    "&:hover": {
+                      background: type === vocabType ? "" : "rgba(0,0,0,0.04)",
+                    },
+                    "& .MuiChip-label": {
+                      px: 2,
+                      fontSize: "1rem",
+                    },
+                  }}
+                />
+              </Box>
             ))}
-          </Select>
+          </Box>
 
-          <Select
-            value={letter}
-            onChange={(e) => setLetter(e.target.value as string)}
-            fullWidth
+          {/* Letter filter using scrollable touch bar */}
+          <Box
+            sx={{
+              display: "flex",
+              overflowX: "auto",
+              pb: 1,
+              mx: -2,
+              px: 2,
+              "&::-webkit-scrollbar": { display: "none" },
+              scrollSnapType: "x mandatory",
+            }}
           >
-            {Object.values(LetterOptions).map((letter) => (
-              <MenuItem key={letter} value={letter}>
-                {letter
-                  .replace("-letter", "")
-                  .toUpperCase()
-                  .concat(" character")}
-              </MenuItem>
-            ))}
-          </Select>
+            {Object.values(LetterOptions).map((letterOption) => {
+              const letterValue = letterOption
+                .replace("-letter", "")
+                .toUpperCase();
+              const isSelected = letter === letterOption;
+              return (
+                <Box
+                  key={letterOption}
+                  sx={{
+                    scrollSnapAlign: "start",
+                    mr: 0.5,
+                    "&:last-child": { mr: 0 },
+                  }}
+                >
+                  <Chip
+                    label={letterValue}
+                    onClick={() => setLetter(letterOption)}
+                    color={isSelected ? "primary" : "default"}
+                    variant={isSelected ? "filled" : "outlined"}
+                    sx={{
+                      minWidth: "40px",
+                      height: "40px",
+                      borderRadius: "20px",
+                      "& .MuiChip-label": {
+                        px: 1,
+                        fontSize: "0.875rem",
+                        fontWeight: isSelected ? "bold" : "normal",
+                      },
+                    }}
+                  />
+                </Box>
+              );
+            })}
+          </Box>
         </Stack>
-      </AppBar>
+      </Box>
       <Box
         sx={{
           display: "grid",
@@ -110,7 +312,7 @@ export default function VocabList({ data }: VocabListProps) {
           },
           gap: 2,
           width: "100%",
-          mt: 12,
+          mt: 2,
         }}
       >
         {filteredData.map((item, idx) => (
@@ -122,10 +324,23 @@ export default function VocabList({ data }: VocabListProps) {
               display: "flex",
               flexDirection: "column",
               borderRadius: 6,
-              background: "white",
+              background: mode === "dark" ? "rgba(32, 32, 32, 0.95)" : "white",
               backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+              border: `1px solid ${
+                mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)"
+              }`,
+              boxShadow:
+                mode === "dark"
+                  ? "0 8px 32px rgba(0,0,0,0.5)"
+                  : "0 8px 32px rgba(0,0,0,0.1)",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow:
+                  mode === "dark"
+                    ? "0 12px 40px rgba(0,0,0,0.6)"
+                    : "0 12px 40px rgba(0,0,0,0.15)",
+              },
             }}
           >
             <CardContent sx={{ flexGrow: 1, width: "100%" }}>
@@ -233,7 +448,10 @@ export default function VocabList({ data }: VocabListProps) {
                       fontStyle: "italic",
                       color: "text.secondary",
                       width: "100%",
-                      backgroundColor: "rgba(0,0,0,0.04)",
+                      backgroundColor:
+                        mode === "dark"
+                          ? "rgba(255,255,255,0.03)"
+                          : "rgba(0,0,0,0.04)",
                       p: 2,
                       borderRadius: 2,
                       borderLeft: `4px solid ${
@@ -255,10 +473,23 @@ export default function VocabList({ data }: VocabListProps) {
 
       {filteredData.length === 0 && (
         <Box sx={{ textAlign: "center", mt: 8 }}>
-          <Typography variant="h6" sx={{ color: "rgba(0,0,0,0.7)", mb: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              color:
+                mode === "dark" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
+              mb: 2,
+            }}
+          >
             No vocabulary found
           </Typography>
-          <Typography variant="body2" sx={{ color: "rgba(0,0,0,0.6)" }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color:
+                mode === "dark" ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.6)",
+            }}
+          >
             Try adjusting your search terms or filters
           </Typography>
         </Box>

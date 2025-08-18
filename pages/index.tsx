@@ -4,10 +4,15 @@ import Vocab from "../words.json";
 import { Stack } from "@mui/material";
 import { VocabItem } from "../utils/common";
 
-export default function Index() {
+interface IndexProps {
+  mode: "light" | "dark";
+  setMode: (mode: "light" | "dark") => void;
+}
+
+export default function Index({ mode, setMode }: IndexProps) {
   return (
     <Stack>
-      <VocabList data={Vocab as VocabItem[]} />
+      <VocabList data={Vocab as VocabItem[]} mode={mode} setMode={setMode} />
     </Stack>
   );
 }
