@@ -380,7 +380,7 @@ export default function VocabList({ data, mode, setMode }: VocabListProps) {
                   lineHeight: 1.2,
                 }}
               >
-                {item.word || item.idiom}{" "}
+                {item.word?.toUpperCase() || item.idiom}{" "}
                 {item["meaning (hindi)"] && `(${item["meaning (hindi)"]})`}
               </Typography>
 
