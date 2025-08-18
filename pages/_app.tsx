@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 
 export default function App({ Component, pageProps }: AppProps) {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const [mode, setMode] = useState<"light" | "dark">("light");
+  const [mode, setMode] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     setMode(prefersDarkMode ? "dark" : "light");
